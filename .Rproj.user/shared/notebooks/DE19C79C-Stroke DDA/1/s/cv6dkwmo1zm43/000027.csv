@@ -1,0 +1,2 @@
+"0",""
+"0","ggplot(df, aes(x = work_type)) + geom_bar(stat = ""count"", fill = ""red"") + geom_text(aes(label = ..count..), stat = ""count"", vjust = 1.5, color = ""white"") + ggtitle(""Distribution of Patients type of work"") + theme_classic() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))"

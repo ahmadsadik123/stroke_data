@@ -1,0 +1,4 @@
+"0",""
+"0","ggplot(data = df2, aes(x = bmi)) + geom_histogram(aes(y = ..density..), bins = 10, color = ""royalblue2"" , fill = ""steelblue1"") + geom_density(fill = 'blue', alpha = 0.2) + theme_classic() + ggtitle (""Histogram of BMI"")"
+"2","Don't know how to automatically pick scale for object of type impute. Defaulting to continuous.
+"

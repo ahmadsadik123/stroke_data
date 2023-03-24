@@ -1,0 +1,1 @@
+"0","ggplot(data = df2, aes(x = stroke, y = age, fill = stroke)) + geom_boxplot() + theme_classic() + xlab(""Stroke"") + ylab(""Age"") + ggtitle(""Boxplot of Stroke by Age"") + labs(fill = ""stroke"")"

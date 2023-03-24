@@ -1,0 +1,1 @@
+"0","ggplot(data = df2, aes(x = stroke, y = avg_glucose_level, fill = stroke)) + geom_boxplot() + theme_classic() + xlab(""Stroke"") + ylab(""Average Glucose Level"") + ggtitle(""Boxplot of Stroke by Average glucose level"") + labs(fill = ""stroke"")"

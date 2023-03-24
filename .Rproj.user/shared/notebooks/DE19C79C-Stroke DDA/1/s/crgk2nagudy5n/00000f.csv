@@ -1,0 +1,5 @@
+"0","for (col in numeric_columns){"
+"0","  title = paste(""Boxplot for column"", col)"
+"0","  y_axis = paste(""values of column"", col)"
+"0","  boxplot(df2[, col], main=title, ylab=y_axis)"
+"0","}"

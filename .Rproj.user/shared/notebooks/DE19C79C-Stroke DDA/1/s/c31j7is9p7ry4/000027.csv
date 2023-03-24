@@ -1,0 +1,6 @@
+"0","biplot("
+"0","  pca,"
+"0","  choices = c(1,2),"
+"0","  scale = 0,"
+"0","  col = c(""darkgreen"", ""black"")"
+"0",")"

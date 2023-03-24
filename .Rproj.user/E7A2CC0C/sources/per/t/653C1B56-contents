@@ -1,0 +1,703 @@
+---
+title: "MarketSales"
+author: '1308890'
+date: "16/03/2022"
+output: html_document
+editor_options: 
+  chunk_output_type: inline
+---
+
+
+
+```{r}
+# The below packages were installed into this project
+
+install.packages("ggplot2")
+install.packages("skimr")
+install.packages("dplyr")
+install.packages("corrplot")
+install.packages("ggpubr")
+install.packages("tree")
+install.packages("mgcv")
+install.packages("stringr")
+install.packages("neuralnet")
+install.packages("tidyverse")
+
+
+library(stringr)
+library(tree)
+library(mgcv)
+library(corrplot)
+library(dplyr)
+library(ggplot2)
+library(neuralnet)
+library(tidyverse)
+
+```
+
+
+```{r}
+df <- read.csv(file = "supermarket_sales.csv")
+```
+
+
+Data Quality Analysis
+
+
+```{r}
+head(df)
+tail(df)
+str(df)
+```
+
+```{r}
+summary(df)
+```
+
+
+Invoice.ID - Invoice ID should be unique. This will be investigated for errors. 
+
+
+Branch - There should only be 3 options for Branch; A, B and C. This will be investigated for errors.
+
+
+City - There should only be 3 options for City; Yangon, Naypyitaw and Mandalay. This will be investigated for errors.
+
+
+Customer.type - There should only be 2 options for customer type; Normal and Member. This will be investigated for errors.
+
+
+Gender - There should only be 2 options for Gender; Male and Female. This will be investigated for errors.
+
+
+Product.line - There should only be 6 options for product line;Electronic accessories, Fashion accessories, Food and beverages, Health and beauty, Home and lifestyle and Sports and travel. This will be investigated for errors. 
+
+
+Unit.price - Unit.price will be investigated to make sure there aren't any errors. This will be done by calculating Total, if the new values match the previous ones that means there shouldn't be any errors. The minimum and maximum values will also be checked for outliers.
+
+
+Quantity - Quantity will be investigated for errors. This will be done by calculating Total. The minimum and maximum values will also be checked for outliers.
+
+
+Tax.5 - Tax will be checked for errors. This will be done by calculating Total. The minimum and maximum values will also be checked for outliers.
+
+
+
+Total - Total will be investigated for errors. This will be done by recalculating Total. If the new values match the old values then there shouldn't be any errors. The formula for Total is: (Quantity * unit.price) + Tax.5
+
+
+
+Date - 
+
+
+
+Time - The stores open at 10:00 and close at 21:00. This will be investigated for errors.
+
+
+
+Payment - There should only be 3 options for Payment; Ewallet, Cash and Credit Card. This will be investigated for errors.
+
+
+
+Cogs - Cost of Goods Sold will be investigated for errors. This will be done by calculating gross.profit.percentage again. The minimum and maximum values will also be checked for outliers.
+
+
+
+Gross.margin.percentage - Gross.margin.percentage will be investigated for errors. This will be done by recalculating it and if the new values match the old ones that means there shouldn't be any errors. The formula to find the gross profit margin is: (Total - cogs)/Total
+
+
+
+Gross.income - Gross.income will be investigated for errors. This will be done by recalculating it. The formula for Grosss.income is: Total - cogs
+
+
+Rating - Ratings should be between 0 and 10. This will be investigated for errors.
+
+
+Cleaning
+
+
+As we can see below, there are no duplicates in the Invoice ID column.
+```{r}
+anyDuplicated(df$Invoice.ID)
+```
+
+As seen below, there are no errors in the City and Branch columns. We can also see that Yangon corresponds to Branch A, Mandalay to B and Naypyitaw to C.
+```{r}
+table(df$City)
+
+table(df$Branch)
+```
+
+As we can see below there are no errors in the customer type, gender, product line and payment columns.
+```{r}
+table(df$Customer.type)
+table(df$Gender)
+table(df$Product.line)
+table(df$Payment)
+```
+
+As we can see below there are no outliers in the unit.price column.
+```{r}
+unit_price_order <- order(df$Unit.price, decreasing = F)
+
+unit_price_order_table <- df[unit_price_order,]
+
+unit_price_orderinc <- order(df$Unit.price, decreasing = T)
+
+unit_price_order_tableinc <- df[unit_price_orderinc,]
+
+head(unit_price_order_table, 10)
+
+head(unit_price_order_tableinc, 10)
+
+
+boxplot.stats(df$Unit.price)$out
+```
+
+As we can see below there are no outliers in the Quantity column.
+```{r}
+quantity_order <- order(df$Quantity, decreasing = F)
+
+quantity_order_table <- df[quantity_order,]
+
+quantity_orderinc <- order(df$Quantity, decreasing = T)
+
+quantity_order_tableinc <- df[quantity_orderinc,]
+
+head(quantity_order_table, 10)
+
+head(quantity_order_tableinc, 10)
+
+
+boxplot.stats(df$Quantity)$out
+```
+
+As we can see below there are no outliers in the Tax.5. column.
+```{r}
+Tax_order <- order(df$Tax.5., decreasing = F)
+
+Tax_order_table <- df[Tax_order,]
+
+Tax_orderinc <- order(df$Tax.5., decreasing = T)
+
+Tax_order_tableinc <- df[Tax_orderinc,]
+
+head(Tax_order_table, 10)
+
+head(Tax_order_tableinc, 10)
+
+
+boxplot.stats(df$Tax.5.)$out
+```
+
+
+As we can see below, there are no outliers in the cogs column.
+```{r}
+cogs_order <- order(df$cogs, decreasing = F)
+
+cogs_order_table <- df[cogs_order,]
+
+cogs_orderinc <- order(df$cogs, decreasing = T)
+
+cogs_order_tableinc <- df[cogs_orderinc,]
+
+head(cogs_order_table, 10)
+
+head(cogs_order_tableinc, 10)
+
+
+boxplot.stats(df$cogs)$out
+```
+
+Total was recalculated below and put into new column Total2. Another new column, Total3 was made to show the differences between the new Total2 column and the existing Total column. As you can see below the differences are negligible and mostly likely due to rounding differences. This means there are no errors in the Total column.
+```{r}
+df$total2 <- (df$Quantity * df$Unit.price) + df$Tax.5.
+df$total3 <- df$total2 - df$Total
+
+Total_order <- order(df$total3, decreasing = F)
+
+Total_order_table <- df[Total_order,]
+
+Total_orderinc <- order(df$total3, decreasing = T)
+
+Total_order_tableinc <- df[Total_orderinc,]
+
+head(Total_order_table, 10)
+
+head(Total_order_tableinc, 10)
+
+hist(df$total3)
+```
+
+Gross.margin.percentage was recalculated below and put into new column gross.margin.percentage2. Another new column, gross.margin.percentage3 was made to show the differences between the new gross.margin.percentage2 column and the existing gross.margin.percentage column. As you can see below the differences are negligible and mostly likely due to rounding differences. This means there are no errors in the gross.margin.percentage column.
+```{r}
+df$gross.margin.percentage2 <- ((df$Total - df$cogs)/df$Total) * 100
+df$gross.margin.percentage3 <- df$gross.margin.percentage - df$gross.margin.percentage2
+
+GMP_order <- order(df$gross.margin.percentage3, decreasing = F)
+
+GMP_order_table <- df[GMP_order,]
+
+GMP_orderinc <- order(df$gross.margin.percentage3, decreasing = T)
+
+GMP_order_tableinc <- df[GMP_orderinc,]
+
+head(GMP_order_table, 10)
+
+head(GMP_order_tableinc, 10)
+
+hist(df$gross.margin.percentage3)
+```
+
+
+gross.income was recalculated below and put into new column gross.income2. Another new column, gross.income3 was made to show the differences between the new gross.income2 column and the existing gross.income column. As you can see below the differences are negligible and mostly likely due to rounding differences. This means there are no errors in the gross.income column.
+```{r}
+df$gross.income2 <- df$Total - df$cogs
+df$gross.income3 <- df$gross.income - df$gross.income2
+
+GI_order <- order(df$gross.income3, decreasing = F)
+
+GI_order_table <- df[GI_order,]
+
+GI_orderinc <- order(df$gross.income3, decreasing = T)
+
+GI_order_tableinc <- df[GI_orderinc,]
+
+head(GI_order_table, 10)
+
+head(GI_order_tableinc, 10)
+
+hist(df$gross.income3)
+```
+
+As we can see below all the values for rating are between 4 and 10 meaning there are no errors in this column.
+```{r}
+summary(df$Rating)
+hist(df$Rating)
+```
+
+As we can see below, all the values for time are between 10:00 and 21:00 which means there are no errors. 
+```{r}
+time_order <- order(df$Time, decreasing = F)
+
+time_order_table <- df[time_order,]
+
+head(time_order_table)
+
+time_orderdec <- order(df$Time, decreasing = T)
+
+time_order_tabledec <- df[time_orderdec,]
+
+head(time_order_tabledec)
+```
+
+The line below is being rerun to remove all the new columns made as they were only made to check for errors and are not needed going forward.
+```{r}
+df <- read.csv(file = "supermarket_sales.csv")
+```
+
+
+Variables have been covered to the appropriate data type below.
+```{r}
+str(df)
+df$Invoice.ID <- as.factor(df$Invoice.ID)
+df$Branch <- as.factor(df$Branch)
+df$City <- as.factor(df$City)
+df$Customer.type <- as.factor(df$Customer.type)
+df$Gender <- as.factor(df$Gender)
+df$Product.line <- as.factor(df$Product.line)
+df$Payment <- as.factor(df$Payment)
+```
+
+
+
+
+Exploratory Data Analysis
+
+
+```{r}
+
+print("(1) Showing top 10 rows of Supermarket Sales Dataset:")
+head(df, 10)
+
+print("(2) Showing last 10 rows of Supermarket Sales Dataset:")
+tail(df, 10)
+
+```
+
+```{r}
+ggplot(df, aes(x = Branch, fill = Branch)) + geom_bar(stat = "count") + geom_text(aes(label = ..count..), stat = "count", vjust = 1.5, color = "white") + ggtitle("Distribution of sales by Branch") + scale_fill_manual(values = c("A" = "red", "B" = "blue", "C" = "darkgreen")) + theme_classic()
+
+ggplot(df, aes(x = Payment, fill = Payment)) + geom_bar(stat = "count") + geom_text(aes(label = ..count..), stat = "count", vjust = 1.5, color = "white") + ggtitle("Distribution of sales by Payment type") + scale_fill_manual(values = c("Cash" = "red", "Ewallet" = "blue", "Credit card" = "darkgreen")) + theme_classic()
+
+ggplot(df, aes(x = City, fill = City)) + geom_bar(stat = "count") + geom_text(aes(label = ..count..), stat = "count", vjust = 1.5, color = "white") + ggtitle("Distribution of sales by City") + scale_fill_manual(values = c("Yangon" = "red", "Mandalay" = "blue", "Naypyitaw" = "darkgreen")) + theme_classic()
+
+ggplot(df, aes(x = Customer.type, fill = Customer.type)) + geom_bar(stat = "count") + geom_text(aes(label = ..count..), stat = "count", vjust = 1.5, color = "white") + ggtitle("Distribution of sales by Customer type") + scale_fill_manual(values = c("Normal" = "red", "Member" = "blue")) + theme_classic()
+
+ggplot(df, aes(x = Gender, fill = Gender)) + geom_bar(stat = "count") + geom_text(aes(label = ..count..), stat = "count", vjust = 1.5, color = "white") + ggtitle("Distribution of sales by Gender") + scale_fill_manual(values = c("Male" = "red", "Female" = "blue")) + theme_classic() 
+
+ggplot(df, aes(x = Product.line)) + geom_bar(stat = "count", fill = "red") + geom_text(aes(label = ..count..), stat = "count", vjust = 1.5, color = "white") + ggtitle("Distribution of sales by Product Line") + theme_classic() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+```
+
+
+```{r}
+
+numeric_columns <- c("Unit.price",
+                     "Quantity",
+                     "Tax.5.",
+                     "Total",
+                     "cogs",
+                     "gross.income",
+                     "Rating")     #cant use gross margin % as all same value
+
+
+numeric_df <- subset(df, select = numeric_columns)
+
+corr_matrix <- round(cor(numeric_df) ,2)
+corr_matrix
+corrplot.mixed(corr_matrix, order = 'AOE')
+
+```
+
+```{r}
+ggplot(data = df, aes(x = Unit.price)) + geom_histogram(aes(y = ..density..), bins = 10, color = "royalblue2" , fill = "steelblue1") + geom_density(fill = 'blue', alpha = 0.2) + theme_classic() + ggtitle ("Histogram of Unit Price")
+
+ggplot(data = df, aes(x = Quantity)) + geom_histogram(aes(y = ..density..), bins = 10, color = "royalblue2" , fill = "steelblue1") + geom_density(fill = 'blue', alpha = 0.2) + theme_classic() + ggtitle ("Histogram of Quantity")
+
+ggplot(data = df, aes(x = Tax.5.)) + geom_histogram(aes(y = ..density..), bins = 10, color = "royalblue2" , fill = "steelblue1") + geom_density(fill = 'blue', alpha = 0.2) + theme_classic() + ggtitle ("Histogram of Tax")
+
+ggplot(data = df, aes(x = Total)) + geom_histogram(aes(y = ..density..), bins = 10, color = "royalblue2" , fill = "steelblue1") + geom_density(fill = 'blue', alpha = 0.2) + theme_classic() + ggtitle ("Histogram of Total")
+
+ggplot(data = df, aes(x = cogs)) + geom_histogram(aes(y = ..density..), bins = 10, color = "royalblue2" , fill = "steelblue1") + geom_density(fill = 'blue', alpha = 0.2) + theme_classic() + ggtitle ("Histogram of Cost of goods sold")
+
+ggplot(data = df, aes(x = gross.income)) + geom_histogram(aes(y = ..density..), bins = 10, color = "royalblue2" , fill = "steelblue1") + geom_density(fill = 'blue', alpha = 0.2) + theme_classic() + ggtitle ("Histogram of Gross Income")
+
+ggplot(data = df, aes(x = Rating)) + geom_histogram(aes(y = ..density..), bins = 10, color = "royalblue2" , fill = "steelblue1") + geom_density(fill = 'blue', alpha = 0.2) + theme_classic() + ggtitle ("Histogram of Rating")
+
+```
+
+
+```{r}
+for (col in numeric_columns){
+  message = paste("Shapiro normality test for columns", col)
+  print(message)
+  shapiro_test <- shapiro.test(df[,col])
+  print(shapiro_test[2])
+  if (shapiro_test[2] < 0.05) {
+    shapiro_message <- paste("This is a small p-value, we will reject the null hypothesis for", col, "this sample displays normal distributation")
+    print(shapiro_message)
+  }
+  else {
+    print(paste("Failed to reject null hypothesis. Column", col, "is normally distributed"))
+  }
+  cat(".....................................................\n\n\n")
+}
+
+```
+
+
+```{r}
+for (col in numeric_columns){
+  title = paste("Q-Q Plot of the columns", col)
+  qqnorm(df[,col], main=title)
+  qqline(df[,col], col="blue", lwd=2)
+}
+```
+
+```{r}
+
+for (col in numeric_columns){
+  title = paste("Boxplot for column", col)
+  y_axis = paste("values of column", col)
+  boxplot(df[, col], main=title, ylab=y_axis)
+}
+
+```
+
+Bivariate EDA
+
+```{r}
+for (col in numeric_columns){
+  title = paste("Relationship between Tax and", col)
+  x_axis = col
+  y_axis = "Tax.5."
+  plot(df[,col],
+  df[,"Tax.5."],
+  pch=16, 
+  cex=1.3,
+  col="orange",
+  ylab=y_axis,
+  xlab=x_axis,
+  main=title)
+
+abline(lm(df[,"Tax.5."]~df[,col]),
+       lwd=2,
+       col="red")
+}
+
+for (col in numeric_columns){
+  title = paste("Relationship between Gross Income and", col)
+  x_axis = col
+  y_axis = "gross.income"
+  plot(df[,col],
+  df[,"gross.income"],
+  pch=16, 
+  cex=1.3,
+  col="orange",
+  ylab=y_axis,
+  xlab=x_axis,
+  main=title)
+
+abline(lm(df[,"gross.income"]~df[,col]),
+       lwd=2,
+       col="red")
+}
+
+for (col in numeric_columns){
+  title = paste("Relationship between Cost of Goods Sold and", col)
+  x_axis = col
+  y_axis = "cogs"
+  plot(df[,col],
+  df[,"cogs"],
+  pch=16, 
+  cex=1.3,
+  col="orange",
+  ylab=y_axis,
+  xlab=x_axis,
+  main=title)
+
+abline(lm(df[,"cogs"]~df[,col]),
+       lwd=2,
+       col="red")
+}
+
+for (col in numeric_columns){
+  title = paste("Relationship between Total and", col)
+  x_axis = col
+  y_axis = "Total"
+  plot(df[,col],
+  df[,"Total"],
+  pch=16, 
+  cex=1.3,
+  col="orange",
+  ylab=y_axis,
+  xlab=x_axis,
+  main=title)
+
+abline(lm(df[,"Total"]~df[,col]),
+       lwd=2,
+       col="red")
+}
+```
+
+Boxplot of Gender in Comparison to other columns
+
+```{r}
+ggplot(data = df, aes(x = Gender, y = Unit.price, fill = Gender)) + geom_boxplot() + theme_classic() + xlab("Gender") + ylab("Unit Price") + ggtitle("Boxplot of Gender by Unit Price") + labs(fill = "Gender")
+
+ggplot(data = df, aes(x = Gender, y = Quantity, fill = Gender)) + geom_boxplot() + theme_classic() + xlab("Gender") + ylab("Quantity") + ggtitle("Boxplot of Gender by Quantity") + labs(fill = "Gender")
+
+ggplot(data = df, aes(x = Gender, y = Tax.5., fill = Gender)) + geom_boxplot() + theme_classic() + xlab("Gender") + ylab("Tax") + ggtitle("Boxplot of Gender by Tax") + labs(fill = "Gender")
+
+ggplot(data = df, aes(x = Gender, y = Total, fill = Gender)) + geom_boxplot() + theme_classic() + xlab("Gender") + ylab("Total") + ggtitle("Boxplot of Gender by Total") + labs(fill = "Gender")
+
+ggplot(data = df, aes(x = Gender, y = cogs, fill = Gender)) + geom_boxplot() + theme_classic() + xlab("Gender") + ylab("Cost of Goods Sold") + ggtitle("Boxplot of Gender by Cost of Goods Sold") + labs(fill = "Gender")
+
+ggplot(data = df, aes(x = Gender, y = gross.income, fill = Gender)) + geom_boxplot() + theme_classic() + xlab("Gender") + ylab("Gross Income") + ggtitle("Boxplot of Gender by Gross Income") + labs(fill = "Gender")
+
+ggplot(data = df, aes(x = Gender, y = Rating, fill = Gender)) + geom_boxplot() + theme_classic() + xlab("Gender") + ylab("Rating") + ggtitle("Boxplot of Gender by Rating") + labs(fill = "Gender")
+```
+
+
+```{r}
+df2 <- read.csv("supermarket_sales.csv")
+df2$gross.margin.percentage <- NULL
+```
+
+```{r}
+data_numeric <- select_if(df2, is.numeric)
+data_numeric
+```
+
+
+```{r}
+pca <- prcomp(data_numeric, center = T, scale. = T)
+pca
+```
+
+```{r}
+attributes(pca)
+```
+
+```{r}
+pca.var <- pca$sdev^2
+pca.var
+```
+
+```{r}
+pca.pev <- pca.var/sum(pca.var)
+pca.pev
+```
+
+```{r}
+screeplot(pca)
+```
+
+```{r}
+str(pca)
+```
+
+
+```{r}
+summary(pca)
+```
+
+
+```{r}
+
+biplot(
+  pca,
+  choices = c(1,2),
+  scale = 0,
+  col = c("darkgreen", "black")
+)
+
+biplot(
+  pca,
+  choices = c(3,4),
+  scale = 0,
+  col = c("yellow", "black")
+)
+```
+
+```{r}
+pca.loadings <- pca$rotation
+pca.loadings
+```
+
+```{r}
+opar <- par(no.readonly = T)
+colvector = c("red", "yellow", "pink", "grey", "blue", "orange", "purple")
+labvector <- c("PC1", "PC2")
+barplot(
+  pca.loadings[,c(1:2)],
+  beside = T,
+  yaxt = "n",
+  names.arg = labvector,
+  col = colvector,
+  ylim = c(-1,1),
+  border = "white",
+  ylab = "loadings"
+)
+axis(2, seq(-1, 1, 0.1))
+legend(
+  "bottomright",
+  bty = "n",
+  col = colvector,
+  pch = 15, 
+  row.names(pca.loadings)
+)
+par(opar)
+```
+
+```{r}
+opar <- par(no.readonly = T)
+colvector = c("red", "yellow", "pink", "grey", "blue", "orange", "purple")
+labvector <- c("PC3", "PC4")
+barplot(
+  pca.loadings[,c(3:4)],
+  beside = T,
+  yaxt = "n",
+  names.arg = labvector,
+  col = colvector,
+  ylim = c(-1,1),
+  border = "white",
+  ylab = "loadings"
+)
+axis(2, seq(-1, 1, 0.1))
+legend(
+  "bottomright",
+  bty = "n",
+  col = colvector,
+  pch = 15, 
+  row.names(pca.loadings)
+)
+par(opar)
+```
+
+
+```{r}
+data_machineL <- cbind(df2)
+```
+
+```{r}
+str(data_machineL)
+data_machineL$Invoice.ID <- as.factor(data_machineL$Invoice.ID)
+data_machineL$Branch <- as.factor(data_machineL$Branch)
+data_machineL$City <- as.factor(data_machineL$City)
+data_machineL$Customer.type <- as.factor(data_machineL$Customer.type)
+data_machineL$Gender <- as.factor(data_machineL$Gender)
+data_machineL$Product.line <- as.factor(data_machineL$Product.line)
+data_machineL$Payment <- as.factor(data_machineL$Payment)
+```
+
+```{r}
+data_machineL <- data_machineL[,c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 15)]
+```
+
+```{r}
+data_numeric <- data_numeric[,c(1, 2, 3, 4, 5, 7, 6)]
+```
+
+
+```{r}
+draw_boxplot <- function() {
+  data_numeric %>%
+    pivot_longer(1:6, names_to = "attributes") %>%
+    ggplot(aes(attributes, value, fill = attributes)) + geom_boxplot()
+}
+
+```
+
+
+```{r}
+draw_boxplot()
+```
+
+```{r}
+data_numeric <- data_numeric %>%
+  dplyr::mutate(across(1:6, scale))
+```
+
+
+```{r}
+draw_boxplot()
+```
+
+```{r}
+neural_training_data <- floor(0.70 * nrow(data_numeric))
+set.seed(123)
+neural_indices <- sample(c(1:nrow(data_numeric)), neural_training_data)
+```
+
+
+```{r}
+neural.training <- data_numeric[neural_indices,]
+neural.testing <- data_numeric[-neural_indices,]
+```
+
+```{r}
+str(data_numeric)
+```
+
+
+```{r}
+model1 <- neuralnet(gross.income ~ Unit.price + Quantity + Tax.5. + Total + cogs + Rating, data = data_numeric, hidden = 1, linear.output = T, stepmax = 1e+05)
+
+```
+
+```{r}
+write.csv(df2, "C:/Users/ahmad/OneDrive/Desktop/Datasets/supermarket_sales_clean.csv")
+```
+

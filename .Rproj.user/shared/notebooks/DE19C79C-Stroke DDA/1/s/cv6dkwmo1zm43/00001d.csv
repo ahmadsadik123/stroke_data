@@ -1,0 +1,2 @@
+"0",""
+"0","ggplot(df2, aes(x = Residence_type, fill = Residence_type)) + geom_bar(stat = ""count"") + geom_text(aes(label = ..count..), stat = ""count"", vjust = 1.5, color = ""white"") + ggtitle(""Distribution of Residence Type"") + scale_fill_manual(values = c(""Rural"" = ""red"", ""Urban"" = ""blue"")) + theme_classic()"

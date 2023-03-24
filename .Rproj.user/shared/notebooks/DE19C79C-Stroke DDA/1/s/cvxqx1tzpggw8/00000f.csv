@@ -1,0 +1,5 @@
+"0","numeric_columns <- c(""age"","
+"0","                     ""avg_glucose_level"","
+"0","                     ""bmi"")    "
+"0",""
+"0","numeric_df <- subset(df2, select = numeric_columns)"

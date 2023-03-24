@@ -1,0 +1,4 @@
+"0",""
+"0","ggplot(data = df2, aes(x = stroke, y = bmi, fill = stroke)) + geom_boxplot() + theme_classic() + xlab(""Stroke"") + ylab(""BMI"") + ggtitle(""Boxplot of Stroke by BMI"") + labs(fill = ""stroke"")"
+"2","Don't know how to automatically pick scale for object of type impute. Defaulting to continuous.
+"

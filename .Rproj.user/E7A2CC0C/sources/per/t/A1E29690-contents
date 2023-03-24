@@ -1,0 +1,389 @@
+---
+title: "Stroke DDA"
+author: '2158761'
+date: '2022-04-24'
+output: html_document
+---
+
+```{r}
+install.packages("ggplot2")
+install.packages("skimr")
+install.packages("dplyr")
+install.packages("corrplot")
+install.packages("ggpubr")
+install.packages("tree")
+install.packages("mgcv")
+install.packages("stringr")
+install.packages("tidyverse")
+install.packages("Hmisc")
+```
+
+```{r}
+library(stringr)
+library(tree)
+library(mgcv)
+library(corrplot)
+library(dplyr)
+library(ggplot2)
+library(tidyverse)
+library(Hmisc)
+```
+
+```{r}
+df <- read.csv("healthcare-dataset-stroke-data.csv")
+```
+
+
+Data Quality Analysis
+
+
+```{r}
+head(df)
+tail(df)
+str(df)
+```
+
+```{r}
+summary(df)
+```
+
+```{r}
+df$id <- as.factor(df$id)
+df$gender <- as.factor(df$gender)
+df$Residence_type <- as.factor(df$Residence_type)
+df$hypertension <- as.factor(df$hypertension)
+df$smoking_status <- as.factor(df$smoking_status)
+df$heart_disease <- as.factor(df$heart_disease)
+df$ever_married <- as.factor(df$ever_married)
+df$work_type <- as.factor(df$work_type)
+df$stroke <- as.factor(df$stroke)
+```
+
+```{r}
+df$bmi <- as.numeric(df$bmi)
+summary(df$bmi)
+```
+
+
+```{r}
+anyDuplicated(df$id)
+```
+
+```{r}
+table(df$gender)
+table(df$Residence_type)
+table(df$hypertension)
+table(df$smoking_status)
+table(df$heart_disease)
+table(df$ever_married)
+table(df$work_type)
+table(df$stroke)
+```
+
+```{r}
+age_order <- order(df$age, decreasing = F)
+
+age_order_table <- df[age_order,]
+
+age_orderinc <- order(df$age, decreasing = T)
+
+age_order_tableinc <- df[age_orderinc,]
+
+head(age_order_table, 10)
+
+head(age_order_tableinc, 10)
+
+
+boxplot.stats(df$age)$out
+```
+
+```{r}
+glucose_order <- order(df$avg_glucose_level, decreasing = F)
+
+glucose_order_table <- df[glucose_order,]
+
+glucose_orderinc <- order(df$avg_glucose_level, decreasing = T)
+
+glucose_order_tableinc <- df[glucose_orderinc,]
+
+head(glucose_order_table, 10)
+
+head(glucose_order_tableinc, 10)
+
+
+boxplot.stats(df$avg_glucose_level)$out
+```
+
+```{r}
+bmi_order <- order(df$bmi, decreasing = F)
+
+bmi_order_table <- df[bmi_order,]
+
+bmi_orderinc <- order(df$bmi, decreasing = T)
+
+bmi_order_tableinc <- df[bmi_orderinc,]
+
+head(bmi_order_table, 10)
+
+head(bmi_order_tableinc, 10)
+
+
+boxplot.stats(df$bmi)$out
+```
+
+
+Cleaning
+
+
+```{r}
+df2 <- df
+```
+
+```{r}
+str(df2)
+```
+
+```{r}
+df2$bmi <- impute(df2$bmi, median)
+
+df2$smoking_status[df2$smoking_status == "Unknown"] <- "never smoked"
+df2$smoking_status <- droplevels(df2$smoking_status)
+
+df2$gender[df2$gender == "Other"] <- "Female"
+df2$gender <- droplevels(df2$gender)
+```
+
+```{r}
+summary(df2$bmi)
+summary(df2$smoking_status)
+summary(df2$gender)
+```
+
+
+EDA
+
+
+```{r}
+numeric_columns <- c("age",
+                     "avg_glucose_level",
+                     "bmi")    
+
+numeric_df <- subset(df2, select = numeric_columns)
+```
+
+```{r}
+ggplot(df2, aes(x = gender, fill = gender)) + geom_bar(stat = "count") + geom_text(aes(label = ..count..), stat = "count", vjust = 1.5, color = "white") + ggtitle("Distribution of Gender") + scale_fill_manual(values = c("Female" = "red", "Male" = "blue")) + theme_classic()
+
+ggplot(df2, aes(x = Residence_type, fill = Residence_type)) + geom_bar(stat = "count") + geom_text(aes(label = ..count..), stat = "count", vjust = 1.5, color = "white") + ggtitle("Distribution of Residence Type") + scale_fill_manual(values = c("Rural" = "red", "Urban" = "blue")) + theme_classic()
+
+ggplot(df2, aes(x = hypertension, fill = hypertension)) + geom_bar(stat = "count") + geom_text(aes(label = ..count..), stat = "count", vjust = 1.5, color = "white") + ggtitle("Distribution of Patients with hypertension") + scale_fill_manual(values = c("0" = "red", "1" = "blue")) + theme_classic()
+
+ggplot(df2, aes(x = smoking_status, fill = smoking_status)) + geom_bar(stat = "count") + geom_text(aes(label = ..count..), stat = "count", vjust = 1.5, color = "white") + ggtitle("Distribution of Patients that smoke") + scale_fill_manual(values = c("never smoked" = "red", "smokes" = "blue", "formerly smoked" = "darkgreen")) + theme_classic()
+
+ggplot(df2, aes(x = heart_disease, fill = heart_disease)) + geom_bar(stat = "count") + geom_text(aes(label = ..count..), stat = "count", vjust = 1.5, color = "white") + ggtitle("Distribution of Patients with heart disease") + scale_fill_manual(values = c("0" = "red", "1" = "blue")) + theme_classic()
+
+ggplot(df2, aes(x = ever_married, fill = ever_married)) + geom_bar(stat = "count") + geom_text(aes(label = ..count..), stat = "count", vjust = 1.5, color = "white") + ggtitle("Distribution of whether patients have ever been married") + scale_fill_manual(values = c("Yes" = "red", "No" = "blue")) + theme_classic()
+
+ggplot(df, aes(x = work_type)) + geom_bar(stat = "count", fill = "red") + geom_text(aes(label = ..count..), stat = "count", vjust = 1.5, color = "white") + ggtitle("Distribution of Patients type of work") + theme_classic() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+ggplot(df2, aes(x = stroke, fill = stroke)) + geom_bar(stat = "count") + geom_text(aes(label = ..count..), stat = "count", vjust = 1.5, color = "white") + ggtitle("Distribution of Patients that have had a stroke") + scale_fill_manual(values = c("0" = "red", "1" = "blue")) + theme_classic()
+```
+
+```{r}
+ggplot(data = df2, aes(x = age)) + geom_histogram(aes(y = ..density..), bins = 10, color = "royalblue2" , fill = "steelblue1") + geom_density(fill = 'blue', alpha = 0.2) + theme_classic() + ggtitle ("Histogram of Age")
+
+ggplot(data = df2, aes(x = avg_glucose_level)) + geom_histogram(aes(y = ..density..), bins = 10, color = "royalblue2" , fill = "steelblue1") + geom_density(fill = 'blue', alpha = 0.2) + theme_classic() + ggtitle ("Histogram of Average Glucose level")
+
+ggplot(data = df2, aes(x = bmi)) + geom_histogram(aes(y = ..density..), bins = 10, color = "royalblue2" , fill = "steelblue1") + geom_density(fill = 'blue', alpha = 0.2) + theme_classic() + ggtitle ("Histogram of BMI")
+```
+
+```{r}
+for (col in numeric_columns){
+  title = paste("Q-Q Plot of", col)
+  qqnorm(df2[,col], main=title)
+  qqline(df2[,col], col="blue", lwd=2)
+}
+```
+
+```{r}
+for (col in numeric_columns){
+  message = paste("Chi Squared test for columns", col)
+  print(message)
+  chisq_test <- chisq.test(df2[,col])
+  print(chisq_test[2])
+  if (chisq_test[2] < 0.05) {
+    chisq_message <- paste("This is a small p-value, we will reject the null hypothesis for", col, "this sample displays normal distributation")
+    print(chisq_message)
+  }
+  else {
+    print(paste("Failed to reject null hypothesis. Column", col, "is normally distributed"))
+  }
+  cat(".....................................................\n\n\n")
+}
+```
+
+```{r}
+corr_matrix <- round(cor(numeric_df) ,2)
+corr_matrix
+corrplot.mixed(corr_matrix, order = 'AOE')
+```
+
+```{r}
+for (col in numeric_columns){
+  title = paste("Relationship between Age and", col)
+  x_axis = col
+  y_axis = "age"
+  plot(df2[,col],
+  df2[,"age"],
+  pch=16, 
+  cex=1.3,
+  col="orange",
+  ylab=y_axis,
+  xlab=x_axis,
+  main=title)
+
+abline(lm(df2[,"age"]~df2[,col]),
+       lwd=2,
+       col="red")
+}
+
+for (col in numeric_columns){
+  title = paste("Relationship between Average Glucose Level and", col)
+  x_axis = col
+  y_axis = "avg_glucose_level"
+  plot(df2[,col],
+  df2[,"avg_glucose_level"],
+  pch=16, 
+  cex=1.3,
+  col="orange",
+  ylab=y_axis,
+  xlab=x_axis,
+  main=title)
+
+abline(lm(df2[,"avg_glucose_level"]~df2[,col]),
+       lwd=2,
+       col="red")
+}
+
+for (col in numeric_columns){
+  title = paste("Relationship between BMI and", col)
+  x_axis = col
+  y_axis = "bmi"
+  plot(df2[,col],
+  df2[,"bmi"],
+  pch=16, 
+  cex=1.3,
+  col="orange",
+  ylab=y_axis,
+  xlab=x_axis,
+  main=title)
+
+abline(lm(df2[,"bmi"]~df2[,col]),
+       lwd=2,
+       col="red")
+}
+```
+
+```{r}
+for (col in numeric_columns){
+  title = paste("Boxplot for column", col)
+  y_axis = paste("values of column", col)
+  boxplot(df2[, col], main=title, ylab=y_axis)
+}
+```
+
+```{r}
+ggplot(data = df2, aes(x = stroke, y = age, fill = stroke)) + geom_boxplot() + theme_classic() + xlab("Stroke") + ylab("Age") + ggtitle("Boxplot of Stroke by Age") + labs(fill = "stroke")
+
+ggplot(data = df2, aes(x = stroke, y = bmi, fill = stroke)) + geom_boxplot() + theme_classic() + xlab("Stroke") + ylab("BMI") + ggtitle("Boxplot of Stroke by BMI") + labs(fill = "stroke")
+
+ggplot(data = df2, aes(x = stroke, y = avg_glucose_level, fill = stroke)) + geom_boxplot() + theme_classic() + xlab("Stroke") + ylab("Average Glucose Level") + ggtitle("Boxplot of Stroke by Average glucose level") + labs(fill = "stroke")
+```
+
+
+PCA
+
+```{r}
+var(numeric_df$age)
+var(numeric_df$avg_glucose_level)
+var(numeric_df$bmi)
+```
+
+
+```{r}
+pca <- prcomp(numeric_df, center = T, scale. = T)
+pca
+summary(pca)
+```
+
+```{r}
+pca.var <- pca$sdev^2
+pca.var
+screeplot(pca)
+```
+
+```{r}
+pca.pev <- pca.var/sum(pca.var)
+pca.pev
+plot(pca.pev)
+```
+
+```{r}
+biplot(
+  pca,
+  choices = c(1,2),
+  scale = 0,
+  col = c("darkgreen", "black")
+)
+
+biplot(
+  pca,
+  choices = c(2,3),
+  scale = 0,
+  col = c("yellow", "black")
+)
+
+biplot(
+  pca,
+  choices = c(1,3),
+  scale = 0,
+  col = c("red", "black")
+)
+```
+
+```{r}
+pca.loadings <- pca$rotation
+pca.loadings
+```
+
+```{r}
+opar <- par(no.readonly = T)
+colvector = c("red", "yellow", "pink")
+labvector <- c("PC1", "PC2", "PC3")
+barplot(
+  pca.loadings[,c(1:3)],
+  beside = T,
+  yaxt = "n",
+  names.arg = labvector,
+  col = colvector,
+  ylim = c(-1,1),
+  border = "white",
+  ylab = "loadings"
+)
+axis(2, seq(-1, 1, 0.1))
+legend(
+  "topleft",
+  bty = "n",
+  col = colvector,
+  pch = 15, 
+  row.names(pca.loadings)
+)
+par(opar)
+```
+
+
+```{r}
+write.csv(df2, "C:/Users/ahmad/OneDrive/Desktop/Stroke DDA/stroke_clean.csv")
+```
+
+

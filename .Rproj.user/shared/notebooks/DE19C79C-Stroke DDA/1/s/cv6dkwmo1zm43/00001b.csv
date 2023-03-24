@@ -1,0 +1,1 @@
+"0","ggplot(df2, aes(x = gender, fill = gender)) + geom_bar(stat = ""count"") + geom_text(aes(label = ..count..), stat = ""count"", vjust = 1.5, color = ""white"") + ggtitle(""Distribution of Gender"") + scale_fill_manual(values = c(""Female"" = ""red"", ""Male"" = ""blue"")) + theme_classic()"

@@ -1,0 +1,7 @@
+"0","df2$bmi <- impute(df2$bmi, median)"
+"0",""
+"0","df2$smoking_status[df2$smoking_status == ""Unknown""] <- ""never smoked"""
+"0","df2$smoking_status <- droplevels(df2$smoking_status)"
+"0",""
+"0","df2$gender[df2$gender == ""Other""] <- ""Female"""
+"0","df2$gender <- droplevels(df2$gender)"

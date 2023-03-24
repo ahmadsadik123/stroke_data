@@ -1,0 +1,2 @@
+"0",""
+"0","ggplot(df2, aes(x = stroke, fill = stroke)) + geom_bar(stat = ""count"") + geom_text(aes(label = ..count..), stat = ""count"", vjust = 1.5, color = ""white"") + ggtitle(""Distribution of Patients that have had a stroke"") + scale_fill_manual(values = c(""0"" = ""red"", ""1"" = ""blue"")) + theme_classic()"

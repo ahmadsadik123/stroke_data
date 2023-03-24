@@ -1,0 +1,2 @@
+"0",""
+"0","ggplot(df2, aes(x = smoking_status, fill = smoking_status)) + geom_bar(stat = ""count"") + geom_text(aes(label = ..count..), stat = ""count"", vjust = 1.5, color = ""white"") + ggtitle(""Distribution of Patients that smoke"") + scale_fill_manual(values = c(""never smoked"" = ""red"", ""smokes"" = ""blue"", ""formerly smoked"" = ""darkgreen"")) + theme_classic()"

@@ -1,0 +1,1 @@
+"0","ggplot(data = df2, aes(x = age)) + geom_histogram(aes(y = ..density..), bins = 10, color = ""royalblue2"" , fill = ""steelblue1"") + geom_density(fill = 'blue', alpha = 0.2) + theme_classic() + ggtitle (""Histogram of Age"")"

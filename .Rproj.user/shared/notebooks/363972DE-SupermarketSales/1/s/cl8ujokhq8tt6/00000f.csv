@@ -1,0 +1,14 @@
+"0",""
+"0","numeric_columns <- c(""Unit.price"","
+"0","                     ""Quantity"","
+"0","                     ""Tax.5."","
+"0","                     ""Total"","
+"0","                     ""cogs"","
+"0","                     ""gross.income"","
+"0","                     ""Rating"")     #cant use gross margin % as all same value"
+"0",""
+"0",""
+"0","numeric_df <- subset(df, select = numeric_columns)"
+"2","Error in `[.data.frame`(x, r, vars, drop = drop) : 
+  undefined columns selected
+"

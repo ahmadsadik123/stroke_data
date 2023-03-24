@@ -1,0 +1,2 @@
+"0",""
+"0","ggplot(df2, aes(x = ever_married, fill = ever_married)) + geom_bar(stat = ""count"") + geom_text(aes(label = ..count..), stat = ""count"", vjust = 1.5, color = ""white"") + ggtitle(""Distribution of whether patients have ever been married"") + scale_fill_manual(values = c(""Yes"" = ""red"", ""No"" = ""blue"")) + theme_classic()"
